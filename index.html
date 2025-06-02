@@ -89,6 +89,11 @@
       margin: 5px 0 0 0;
       font-size: 8px;
     }
+    #prevImage, #nextImage {
+  user-select: none;
+  transform: translateY(-50%);
+}
+    
   </style>
 </head>
 <body>
@@ -127,7 +132,7 @@
         lat: 25.2048,
         lon: 55.2708,
         flag: "https://flagcdn.com/ae.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
+        // image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
         description: "Dubai dazzles with skyscrapers, desert adventures, and a luxury lifestyle. I called it home for a while!"
       },
       {
@@ -136,7 +141,7 @@
         lat: 18.58,
         lon: -68.405,
         flag: "https://flagcdn.com/do.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
+       // image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
         description: "Punta Cana is a tropical dreamland. I lived where most people vacation!"
       },
       {
@@ -145,7 +150,7 @@
         lat: 21.1619,
         lon: -86.8515,
         flag: "https://flagcdn.com/mx.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
+        // image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
         description: "Cancun blends Mayan ruins, beaches, and crazy nightlife. Not just a spring break — it was my real address."
       },
       {
@@ -154,7 +159,7 @@
         lat: -23.55,
         lon: -46.63,
         flag: "https://flagcdn.com/br.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
+        // image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
         description: "My hometown. Chaos, concrete and coxinhas. It all started here."
       }
     ];
@@ -183,14 +188,19 @@ let found = 0;
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
+    let currentCity = "";
+let currentImageIndex = 1;
+    
   function showModal(html) {
   const modalContent = document.getElementById("modalContent");
   modalContent.innerHTML = `
     <div id="textContent">${html}</div>
     <div id="imageContainer" style="display:none; position: relative;">
-      <span id="closeImageBtn" style="position:absolute; top:5px; right:10px; cursor:pointer; font-size:14px;">❌</span>
-      <img id="modalImg" src="" alt="City image" style="max-width:100%; border:1px solid #fdf6e3; margin-top:30px;">
-    </div>
+  <span id="closeImageBtn" style="position:absolute; top:5px; right:10px; cursor:pointer; font-size:14px;">❌</span>
+  <span id="prevImage" style="position:absolute; top:50%; left:10px; font-size:30px; cursor:pointer;">⬅️</span>
+  <span id="nextImage" style="position:absolute; top:50%; right:10px; font-size:30px; cursor:pointer;">➡️</span>
+  <img id="modalImg" src="" alt="City image" style="max-width:100%; border:1px solid #fdf6e3; margin-top:30px;">
+</div>
   `;
   document.getElementById("modal").style.display = "flex";
 
@@ -244,21 +254,55 @@ let found = 0;
   }
 
 function showImage(cityName) {
+  currentCity = cityName;
+  currentImageIndex = 1;
+
   const textContent = document.getElementById("textContent");
   const imageContainer = document.getElementById("imageContainer");
   const modalImg = document.getElementById("modalImg");
 
   textContent.style.display = "none";
   imageContainer.style.display = "block";
-  modalImg.src = `${cityName}.jpg`;
-  modalImg.alt = cityName;
+
+  loadImage();
+
+  document.getElementById("prevImage").onclick = () => {
+    if (currentImageIndex > 1) {
+      currentImageIndex--;
+      loadImage();
+    }
+  };
+
+  document.getElementById("nextImage").onclick = () => {
+    currentImageIndex++;
+    loadImage();
+  };
 }
+
+function loadImage() {
+  const modalImg = document.getElementById("modalImg");
+  const newSrc = currentImageIndex === 1 ? `${currentCity}.jpg` : `${currentCity}${currentImageIndex}.jpg`;
+
+  // Preload to confirm existence
+  const img = new Image();
+  img.onload = () => modalImg.src = newSrc;
+  img.onerror = () => {
+    if (currentImageIndex > 1) {
+      currentImageIndex--; // revert index
+    }
+  };
+  img.src = newSrc;
+}
+    
 function hideImage() {
   const textContent = document.getElementById("textContent");
   const imageContainer = document.getElementById("imageContainer");
 
   imageContainer.style.display = "none";
   textContent.style.display = "block";
+
+  currentImageIndex = 1;
+  currentCity = "";
 }
 
 
