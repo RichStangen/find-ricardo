@@ -2,26 +2,75 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Where Have I Lived?</title>
+  <title>Where in the World Have I Lived?</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f0f2f5; }
-    #game-container { max-width: 600px; margin: auto; text-align: center; }
-    input { padding: 0.5rem; width: 60%; margin: 1rem 0; }
-    button { padding: 0.5rem 1rem; cursor: pointer; }
-    .city-card { margin: 1rem auto; padding: 1rem; background: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    img { width: 100%; border-radius: 10px; }
-    .clue { font-style: italic; color: #555; margin-top: 1rem; }
-    .found-list { margin-top: 1rem; font-size: 0.9rem; color: green; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background-color: #1b1f2a;
+      color: #f8f8f8;
+      padding: 2rem;
+      text-align: center;
+    }
+    h1 {
+      color: #ffe600;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+    input {
+      padding: 0.5rem;
+      width: 50%;
+      margin: 1rem 0;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background-color: #ffe600;
+      border: none;
+      color: #1b1f2a;
+      cursor: pointer;
+    }
+    .city-card {
+      background-color: #2a2f40;
+      padding: 1rem;
+      margin-top: 1rem;
+      border-radius: 10px;
+    }
+    img {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 0.5rem;
+    }
+    .clue {
+      margin-top: 1rem;
+      font-style: italic;
+      color: #a0d8ff;
+    }
+    .status {
+      margin-top: 1rem;
+      color: #00ff88;
+    }
+    .wrong {
+      margin-top: 1rem;
+      color: #ff5555;
+    }
+    .game-section {
+      max-width: 600px;
+      margin: auto;
+    }
   </style>
 </head>
 <body>
-  <div id="game-container">
-    <h1>Where Have I Lived?</h1>
-    <p>Guess a city. If you're right, you'll unlock its story!</p>
-    <input type="text" id="cityInput" placeholder="Enter a city name" />
-    <button onclick="guessCity()">Guess</button>
+  <div class="game-section">
+    <h1>🌍 Where Have I Lived?</h1>
+    <p>Find all the cities I once called home. Think like a detective!</p>
+    <input type="text" id="cityInput" placeholder="Type a city name..." />
+    <button onclick="guessCity()">Search</button>
+
+    <div class="status" id="progressTracker"></div>
     <div id="result"></div>
-    <div class="found-list" id="foundCities"></div>
+    <div class="clue" id="clueBox"></div>
+    <div class="wrong" id="wrongGuessesBox"></div>
   </div>
 
   <script>
@@ -64,41 +113,54 @@
     ];
 
     let guessed = [];
+    let wrongGuesses = [];
+
+    function updateProgress() {
+      document.getElementById("progressTracker").innerText = `Cities Found: ${guessed.length} / ${cities.length}`;
+    }
 
     function guessCity() {
       const input = document.getElementById("cityInput").value.trim();
+      const normalized = input.toLowerCase();
       const resultDiv = document.getElementById("result");
-      const foundDiv = document.getElementById("foundCities");
-      const city = cities.find(c => c.city.toLowerCase() === input.toLowerCase());
+      const clueBox = document.getElementById("clueBox");
+      const wrongBox = document.getElementById("wrongGuessesBox");
 
       resultDiv.innerHTML = '';
+      clueBox.innerHTML = '';
 
-      if (city && !guessed.includes(city.city)) {
-        guessed.push(city.city);
+      const match = cities.find(c => c.city.toLowerCase() === normalized);
+
+      if (match && !guessed.includes(match.city)) {
+        guessed.push(match.city);
         resultDiv.innerHTML = `
           <div class="city-card">
-            <h2>${city.city}, ${city.country}</h2>
-            <img src="${city.image}" alt="${city.city}">
-            <p>${city.description}</p>
+            <h2>🧩 ${match.city}, ${match.country}</h2>
+            <p>${match.description}</p>
+            <img src="${match.image}" alt="${match.city}">
           </div>
         `;
-      } else if (guessed.includes(input)) {
-        resultDiv.innerHTML = `<p>You've already discovered ${input}!</p>`;
-      } else {
-        const undiscovered = cities.filter(c => !guessed.includes(c.city));
-        if (undiscovered.length > 0) {
-          const clue = undiscovered[Math.floor(Math.random() * undiscovered.length)].clue;
-          resultDiv.innerHTML = `<p class="clue">Clue: ${clue}</p>`;
-        }
+      } else if (!match && !wrongGuesses.includes(input)) {
+        wrongGuesses.push(input);
+        const remaining = cities.filter(c => !guessed.includes(c.city));
+        const clue = remaining[Math.floor(Math.random() * remaining.length)].clue;
+        clueBox.innerText = `Clue: ${clue}`;
+      } else if (match && guessed.includes(match.city)) {
+        resultDiv.innerHTML = `<p>🕵️ You've already found ${match.city}!</p>`;
       }
 
-      foundDiv.innerHTML = `Found cities: ${guessed.join(', ')}`;
+      updateProgress();
+
+      wrongBox.innerHTML = `Wrong guesses: ${wrongGuesses.join(', ')}`;
+
       if (guessed.length === cities.length) {
-        resultDiv.innerHTML += `<p><strong>🎉 You've discovered all the cities!</strong></p>`;
+        clueBox.innerHTML = `<p><strong>🎉 Case closed! You've discovered all the cities!</strong></p>`;
       }
 
       document.getElementById("cityInput").value = '';
     }
+
+    updateProgress();
   </script>
 </body>
 </html>
