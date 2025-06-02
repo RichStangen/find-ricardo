@@ -65,7 +65,13 @@
       vertical-align: middle;
       margin-right: 5px;
     }
+.clicked-marker {
+  filter: hue-rotate(180deg) brightness(1.3);
+}
 
+.clicked-marker-wrong {
+  filter: grayscale(1) brightness(0.7);
+}
     button {
       margin-top: 15px;
       background: #444;
@@ -163,76 +169,117 @@
       { name: "Rome", lat: 41.9028, lon: 12.4964, fun: "No pizza or passport stamps here." }
     ];
 
-    let found = 0;
-    let totalGuesses = 0;
+    // Your data arrays remain unchanged (correctCities, wrongCities)
 
-    const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 6,
-      attribution: '© OpenStreetMap'
-    }).addTo(map);
+let found = 0;
+let totalGuesses = 0;
+let gameStarted = false;
 
-    function showModal(html) {
-      document.getElementById("modalContent").innerHTML = html + '<br><button onclick="closeModal()">Close</button>';
-      document.getElementById("modal").style.display = "flex";
-    }
+const map = L.map('map').setView([20, 0], 2);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 6,
+  attribution: '© OpenStreetMap'
+}).addTo(map);
 
-    function closeModal() {
-      document.getElementById("modal").style.display = "none";
-    }
+function showModal(html) {
+  document.getElementById("modalContent").innerHTML = html;
+  document.getElementById("modal").style.display = "flex";
+}
 
-    function updateStatus() {
-      document.getElementById("found").innerText = found;
-      document.getElementById("guesses").innerText = totalGuesses;
-    }
+function closeModal() {
+  document.getElementById("modal").style.display = "none";
+}
 
-    function handleCorrect(city, marker) {
-      if (marker.clicked) return;
-      marker.clicked = true;
+function updateStatus() {
+  document.getElementById("found").innerText = found;
+  document.getElementById("guesses").innerText = totalGuesses;
+}
 
-      totalGuesses++;
-      found++;
-      updateStatus();
-      document.getElementById("correctSound").play();
+function handleCorrect(city, marker) {
+  if (!gameStarted) return;
 
+  marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker' }));
+  totalGuesses++;
+  found++;
+  updateStatus();
+  document.getElementById("correctSound").play();
+
+  showModal(`
+    <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
+    <p>${city.description}</p>
+    <button onclick="showImage('${city.name}')">Check this out</button><br><br>
+    <button onclick="closeModal()">Close</button>
+  `);
+
+  if (found === 5) {
+    setTimeout(() => {
       showModal(`
-        <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
-        <p>${city.description}</p>
-        <img src="${city.image}" alt="${city.name}">
+        <h2>🎉 You cracked the case!</h2>
+        <p>You found all the cities in <strong>${totalGuesses}</strong> guesses!</p>
+        <button onclick="restartGame()">Play Again</button>
+        <button onclick="shareOnSlack()">Share on Slack</button>
       `);
+    }, 800);
+  }
+}
 
-      if (found === 5) {
-        setTimeout(() => {
-          showModal(`<h2>🎉 Case Closed!</h2><p>You found all the cities in <strong>${totalGuesses}</strong> guesses!</p>`);
-        }, 1200);
-      }
-    }
+function handleWrong(city, marker) {
+  if (!gameStarted) return;
 
-    function handleWrong(city, marker) {
-      if (marker.clicked) return;
-      marker.clicked = true;
+  marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker-wrong' }));
+  totalGuesses++;
+  updateStatus();
+  document.getElementById("wrongSound").play();
+  const li = document.createElement('li');
+  li.textContent = city.name;
+  document.getElementById("wrongCities").appendChild(li);
 
-      totalGuesses++;
-      updateStatus();
-      document.getElementById("wrongSound").play();
-      const li = document.createElement('li');
-      li.textContent = city.name;
-      document.getElementById("wrongCities").appendChild(li);
+  showModal(`
+    <p><strong>${city.name}</strong>: ${city.fun}</p>
+    <button onclick="closeModal()">Close</button>
+  `);
+}
 
-      showModal(`<p><strong>${city.name}</strong>: ${city.fun}</p>`);
-    }
+function showImage(cityName) {
+  document.getElementById("modalContent").innerHTML += `
+    <img src="${cityName}.jpg" alt="${cityName}">
+  `;
+}
 
-    correctCities.forEach(city => {
-      const marker = L.marker([city.lat, city.lon]).addTo(map);
-      marker.clicked = false;
-      marker.on("click", () => handleCorrect(city, marker));
-    });
+function restartGame() {
+  location.reload();
+}
 
-    wrongCities.forEach(city => {
-      const marker = L.marker([city.lat, city.lon]).addTo(map);
-      marker.clicked = false;
-      marker.on("click", () => handleWrong(city, marker));
-    });
+function shareOnSlack() {
+  const msg = encodeURIComponent(`I cracked the Carmen Sandiego City Hunt in ${totalGuesses} guesses! 🌍 Play here: [your-link]`);
+  const slackURL = `https://slack.com/app_redirect?channel=general&message=${msg}`;
+  window.open(slackURL, '_blank');
+}
+
+// Add Start Game modal
+window.onload = () => {
+  showModal(`
+    <h2>🕵️ Carmen Sandiego: City Hunt</h2>
+    <p>Can you guess the 5 cities I’ve lived in?</p>
+    <button onclick="startGame()">Start Game</button>
+  `);
+};
+
+function startGame() {
+  gameStarted = true;
+  closeModal();
+}
+
+// Add Markers
+correctCities.forEach(city => {
+  const marker = L.marker([city.lat, city.lon]).addTo(map);
+  marker.on("click", () => handleCorrect(city, marker));
+});
+
+wrongCities.forEach(city => {
+  const marker = L.marker([city.lat, city.lon]).addTo(map);
+  marker.on("click", () => handleWrong(city, marker));
+});
   </script>
 </body>
 </html>
