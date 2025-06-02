@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Where Have I Lived?</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f0f2f5; }
+    #game-container { max-width: 600px; margin: auto; text-align: center; }
+    input { padding: 0.5rem; width: 60%; margin: 1rem 0; }
+    button { padding: 0.5rem 1rem; cursor: pointer; }
+    .city-card { margin: 1rem auto; padding: 1rem; background: #fff; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    img { width: 100%; border-radius: 10px; }
+    .clue { font-style: italic; color: #555; margin-top: 1rem; }
+    .found-list { margin-top: 1rem; font-size: 0.9rem; color: green; }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>Where Have I Lived?</h1>
+    <p>Guess a city. If you're right, you'll unlock its story!</p>
+    <input type="text" id="cityInput" placeholder="Enter a city name" />
+    <button onclick="guessCity()">Guess</button>
+    <div id="result"></div>
+    <div class="found-list" id="foundCities"></div>
+  </div>
+
+  <script>
+    const cities = [
+      {
+        city: "Harbin",
+        country: "China",
+        clue: "This city hosts one of the world's largest ice and snow festivals.",
+        description: "Harbin is famous for its ice sculptures, Russian architecture, and bitterly cold winters.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Harbin_Ice_Snow_Sculpture_Festival_2010.jpg/640px-Harbin_Ice_Snow_Sculpture_Festival_2010.jpg"
+      },
+      {
+        city: "Dubai",
+        country: "UAE",
+        clue: "This city is home to the world's tallest building and luxury galore.",
+        description: "Dubai is a futuristic desert city known for the Burj Khalifa, lavish shopping, and diverse expat culture.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg"
+      },
+      {
+        city: "Punta Cana",
+        country: "Dominican Republic",
+        clue: "Caribbean paradise with all-inclusive resorts and endless beaches.",
+        description: "Punta Cana is known for its white sandy beaches, palm trees, and resort-lined coastline.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg"
+      },
+      {
+        city: "Cancun",
+        country: "Mexico",
+        clue: "Party capital on the Yucatán Peninsula with turquoise waters.",
+        description: "Cancun combines Mayan ruins, world-class nightlife, and picture-perfect beaches.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg"
+      },
+      {
+        city: "Sao Paulo",
+        country: "Brazil",
+        clue: "The largest city in South America with a buzzing business scene and rich cultural diversity.",
+        description: "Sao Paulo is a mega-metropolis known for finance, food, and art. A concrete jungle with soul.",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg"
+      }
+    ];
+
+    let guessed = [];
+
+    function guessCity() {
+      const input = document.getElementById("cityInput").value.trim();
+      const resultDiv = document.getElementById("result");
+      const foundDiv = document.getElementById("foundCities");
+      const city = cities.find(c => c.city.toLowerCase() === input.toLowerCase());
+
+      resultDiv.innerHTML = '';
+
+      if (city && !guessed.includes(city.city)) {
+        guessed.push(city.city);
+        resultDiv.innerHTML = `
+          <div class="city-card">
+            <h2>${city.city}, ${city.country}</h2>
+            <img src="${city.image}" alt="${city.city}">
+            <p>${city.description}</p>
+          </div>
+        `;
+      } else if (guessed.includes(input)) {
+        resultDiv.innerHTML = `<p>You've already discovered ${input}!</p>`;
+      } else {
+        const undiscovered = cities.filter(c => !guessed.includes(c.city));
+        if (undiscovered.length > 0) {
+          const clue = undiscovered[Math.floor(Math.random() * undiscovered.length)].clue;
+          resultDiv.innerHTML = `<p class="clue">Clue: ${clue}</p>`;
+        }
+      }
+
+      foundDiv.innerHTML = `Found cities: ${guessed.join(', ')}`;
+      if (guessed.length === cities.length) {
+        resultDiv.innerHTML += `<p><strong>🎉 You've discovered all the cities!</strong></p>`;
+      }
+
+      document.getElementById("cityInput").value = '';
+    }
+  </script>
+</body>
+</html>
