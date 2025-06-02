@@ -4,35 +4,27 @@
   <meta charset="UTF-8">
   <title>Carmen Sandiego: City Hunt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Fonts & Leaflet CSS -->
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
   <style>
     body {
       margin: 0;
-      font-family: 'Press Start 2P', monospace;
+      font-family: 'Courier New', monospace;
       background: #111;
       color: #fdf6e3;
     }
-
     #map {
       height: 100vh;
       width: 100vw;
     }
-
     #status {
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.7);
       padding: 10px;
       border: 2px solid #fdf6e3;
       z-index: 999;
-      font-size: 10px;
     }
-
     .modal {
       display: none;
       position: fixed;
@@ -41,12 +33,11 @@
       top: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0, 0, 0, 0.8);
       justify-content: center;
       align-items: center;
       text-align: center;
     }
-
     .modal-content {
       background: #222;
       border: 2px solid #fdf6e3;
@@ -54,19 +45,15 @@
       color: #fdf6e3;
       max-width: 500px;
     }
-
     .modal img {
       max-width: 100%;
       border: 1px solid #fdf6e3;
-      margin-top: 10px;
     }
-
     .flag {
       width: 24px;
       vertical-align: middle;
       margin-right: 5px;
     }
-
     button {
       margin-top: 15px;
       background: #444;
@@ -74,36 +61,23 @@
       border: 1px solid #fdf6e3;
       padding: 5px 10px;
       cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
-    }
-
-    #wrongCities {
-      list-style: none;
-      padding-left: 0;
-      margin: 5px 0 0 0;
-      font-size: 8px;
     }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <div id="status">
-    Cities found: <span id="found">0</span> / 5<br>
-    Total guesses: <span id="guesses">0</span><br>
-    Wrong guesses:
-    <ul id="wrongCities"></ul>
-  </div>
+  <div id="status">Cities found: <span id="found">0</span> / 5</div>
 
   <div id="modal" class="modal">
-    <div class="modal-content" id="modalContent"></div>
+    <div class="modal-content" id="modalContent">
+      <p>Content</p>
+      <button onclick="closeModal()">Close</button>
+    </div>
   </div>
 
-  <!-- Sounds -->
   <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
   <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const correctCities = [
@@ -113,8 +87,8 @@
         lat: 45.75,
         lon: 126.65,
         flag: "https://flagcdn.com/cn.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg/640px-Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg",
-        description: "Harbin was my first destination after leaving Brazil. It’s freezing cold, but the beer is warm — culturally speaking. Toasts with hierarchy, 600ml bottles per person, and ‘Ganbei’ challenges were daily dinner rituals."
+        image: "harbin.jpg",
+        description: "My first destination after leaving Brasil was Harbin, one of the coldest city in China, where during winter the average temperature is -17°C, and some days I experienced -32°C. As part of the Chinese culture, they have a great respect towards the older or higher in hierarchy, where even the position of your glass when cheering had a meaning (Your glass should always be below the others, to show respect). Also, drinking alcohol is a huge part of the culture, it was normal for some people you just met to ask how many bottles of beer you can drink. This was measured in 600 mL bottles. And if you end up going for dinner with them, they will challenge you and make you drink as much as you can. Everyone gets their own bottle, to keep count, and when someone shouts ‘Ganbei’, everyone takes their short glass full of beer and drinks bottom up. I’ve seen people drinking 18 bottles of beer in a 2-hour dinner. And most of them seem to be fine after that."
       },
       {
         name: "Dubai",
@@ -123,7 +97,7 @@
         lon: 55.2708,
         flag: "https://flagcdn.com/ae.svg",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
-        description: "Dubai dazzles with skyscrapers, desert adventures, and a luxury lifestyle. I called it home for a while!"
+        description: "Dubai dazzles with skyscrapers, desert adventures, and luxury lifestyle."
       },
       {
         name: "Punta Cana",
@@ -132,7 +106,7 @@
         lon: -68.405,
         flag: "https://flagcdn.com/do.svg",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
-        description: "Punta Cana is a tropical dreamland. I lived where most people vacation!"
+        description: "Punta Cana is a beach paradise of palm trees and turquoise water."
       },
       {
         name: "Cancun",
@@ -141,7 +115,7 @@
         lon: -86.8515,
         flag: "https://flagcdn.com/mx.svg",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
-        description: "Cancun blends Mayan ruins, beaches, and crazy nightlife. Not just a spring break — it was my real address."
+        description: "Cancun mixes Mayan ruins, beach resorts, and wild nightlife."
       },
       {
         name: "Sao Paulo",
@@ -150,7 +124,7 @@
         lon: -46.63,
         flag: "https://flagcdn.com/br.svg",
         image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
-        description: "My hometown. Chaos, concrete and coxinhas. It all started here."
+        description: "Sao Paulo is Brazil’s biggest city with culture, chaos, and charm."
       }
     ];
 
@@ -165,7 +139,6 @@
     ];
 
     let found = 0;
-    let totalGuesses = 0;
 
     const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -184,55 +157,37 @@
 
     function updateStatus() {
       document.getElementById("found").innerText = found;
-      document.getElementById("guesses").innerText = totalGuesses;
     }
 
-    function handleCorrect(city, marker) {
-      if (marker.clicked) return;
-      marker.clicked = true;
-
-      totalGuesses++;
+    function handleCorrect(city) {
       found++;
       updateStatus();
       document.getElementById("correctSound").play();
-
-      showModal(`
+      showModal(
         <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
         <p>${city.description}</p>
         <img src="${city.image}" alt="${city.name}">
-      `);
-
+      );
       if (found === 5) {
         setTimeout(() => {
-          showModal(`<h2>🎉 Case Closed!</h2><p>You found all the cities in <strong>${totalGuesses}</strong> guesses!</p>`);
-        }, 1200);
+          showModal(<h2>🎉 Case Closed!</h2><p>You found all the cities you lived in!</p>);
+        }, 1000);
       }
     }
 
-    function handleWrong(city, marker) {
-      if (marker.clicked) return;
-      marker.clicked = true;
-
-      totalGuesses++;
-      updateStatus();
+    function handleWrong(city) {
       document.getElementById("wrongSound").play();
-      const li = document.createElement('li');
-      li.textContent = city.name;
-      document.getElementById("wrongCities").appendChild(li);
-
-      showModal(`<p><strong>${city.name}</strong>: ${city.fun}</p>`);
+      showModal(<p><strong>${city.name}</strong>: ${city.fun}</p>);
     }
 
     correctCities.forEach(city => {
       const marker = L.marker([city.lat, city.lon]).addTo(map);
-      marker.clicked = false;
-      marker.on("click", () => handleCorrect(city, marker));
+      marker.on("click", () => handleCorrect(city));
     });
 
     wrongCities.forEach(city => {
       const marker = L.marker([city.lat, city.lon]).addTo(map);
-      marker.clicked = false;
-      marker.on("click", () => handleWrong(city, marker));
+      marker.on("click", () => handleWrong(city));
     });
   </script>
 </body>
