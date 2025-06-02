@@ -24,7 +24,7 @@
     #status {
       position: absolute;
       top: 10px;
-      left: 10px;
+      left: 50px;
       background: rgba(0,0,0,0.8);
       padding: 10px;
       border: 2px solid #fdf6e3;
@@ -184,10 +184,19 @@ let found = 0;
   }).addTo(map);
 
   function showModal(html) {
-    const modalContent = document.getElementById("modalContent");
-    modalContent.innerHTML = html;
-    document.getElementById("modal").style.display = "flex";
-  }
+  const modalContent = document.getElementById("modalContent");
+  modalContent.innerHTML = `
+    <div id="textContent">${html}</div>
+    <div id="imageContainer" style="display:none; position: relative;">
+      <span id="closeImageBtn" style="position:absolute; top:5px; right:10px; cursor:pointer; font-size:14px;">❌</span>
+      <img id="modalImg" src="" alt="City image" style="max-width:100%; border:1px solid #fdf6e3; margin-top:30px;">
+    </div>
+  `;
+  document.getElementById("modal").style.display = "flex";
+
+  const closeBtn = document.getElementById("closeImageBtn");
+  closeBtn.addEventListener("click", hideImage);
+}
 
   function closeModal() {
     document.getElementById("modal").style.display = "none";
@@ -234,17 +243,24 @@ let found = 0;
     `);
   }
 
-  function showImage(cityName) {
-    const modalContent = document.getElementById("modalContent");
-    if (!document.getElementById("modalImg")) {
-      const img = document.createElement("img");
-      img.src = `${cityName}.jpg`;
-      img.alt = cityName;
-      img.id = "modalImg";
-      img.style.marginTop = "10px";
-      modalContent.appendChild(img);
-    }
-  }
+function showImage(cityName) {
+  const textContent = document.getElementById("textContent");
+  const imageContainer = document.getElementById("imageContainer");
+  const modalImg = document.getElementById("modalImg");
+
+  textContent.style.display = "none";
+  imageContainer.style.display = "block";
+  modalImg.src = `${cityName}.jpg`;
+  modalImg.alt = cityName;
+}
+function hideImage() {
+  const textContent = document.getElementById("textContent");
+  const imageContainer = document.getElementById("imageContainer");
+
+  imageContainer.style.display = "none";
+  textContent.style.display = "block";
+}
+
 
   function handleWrong(city, marker) {
     if (!gameStarted) return;
