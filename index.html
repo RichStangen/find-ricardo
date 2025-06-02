@@ -1,285 +1,126 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Carmen Sandiego: City Hunt</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  let found = 0;
+  let totalGuesses = 0;
+  let gameStarted = false;
+  let gameCompleted = false;
+  const foundCities = new Set();
 
-  <!-- Fonts & Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  const map = L.map('map').setView([20, 0], 2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 6,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
 
-  <style>
-     body {
-      margin: 0;
-      font-family: 'Courier New', monospace;
-      background: #111;
-      color: #fdf6e3;
-    }
-
-    #map {
-      height: 100vh;
-      width: 100vw;
-    }
-
-    #status {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.8);
-      padding: 10px;
-      border: 2px solid #fdf6e3;
-      z-index: 999;
-      font-size: 10px;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.85);
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-
-    .modal-content {
-      background: #222;
-      border: 2px solid #fdf6e3;
-      padding: 20px;
-      color: #fdf6e3;
-      max-width: 500px;
-    }
-
-    .modal img {
-      max-width: 100%;
-      border: 1px solid #fdf6e3;
-      margin-top: 10px;
-    }
-
-    .flag {
-      width: 24px;
-      vertical-align: middle;
-      margin-right: 5px;
-    }
-.clicked-marker {
-  filter: hue-rotate(180deg) brightness(1.3);
-}
-
-.clicked-marker-wrong {
-  filter: grayscale(1) brightness(0.7);
-}
-    button {
-      margin-top: 15px;
-      background: #444;
-      color: #fdf6e3;
-      border: 1px solid #fdf6e3;
-      padding: 5px 10px;
-      cursor: pointer;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 10px;
-    }
-
-    #wrongCities {
-      list-style: none;
-      padding-left: 0;
-      margin: 5px 0 0 0;
-      font-size: 8px;
-    }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <div id="status">
-    Cities found: <span id="found">0</span> / 5<br>
-    Total guesses: <span id="guesses">0</span><br>
-    Wrong guesses:
-    <ul id="wrongCities"></ul>
-  </div>
-
-  <div id="modal" class="modal">
-    <div class="modal-content" id="modalContent"></div>
-  </div>
-
-  <!-- Sounds -->
-  <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg"></audio>
-  <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/boing.ogg"></audio>
-
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    const correctCities = [
-      {
-        name: "Harbin",
-        country: "China",
-        lat: 45.75,
-        lon: 126.65,
-        flag: "https://flagcdn.com/cn.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg/640px-Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg",
-        description: "Harbin was my first destination after leaving Brazil. It’s freezing cold, but the beer is warm — culturally speaking. Toasts with hierarchy, 600ml bottles per person, and ‘Ganbei’ challenges were daily dinner rituals."
-      },
-      {
-        name: "Dubai",
-        country: "UAE",
-        lat: 25.2048,
-        lon: 55.2708,
-        flag: "https://flagcdn.com/ae.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
-        description: "Dubai dazzles with skyscrapers, desert adventures, and a luxury lifestyle. I called it home for a while!"
-      },
-      {
-        name: "Punta Cana",
-        country: "Dominican Republic",
-        lat: 18.58,
-        lon: -68.405,
-        flag: "https://flagcdn.com/do.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
-        description: "Punta Cana is a tropical dreamland. I lived where most people vacation!"
-      },
-      {
-        name: "Cancun",
-        country: "Mexico",
-        lat: 21.1619,
-        lon: -86.8515,
-        flag: "https://flagcdn.com/mx.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
-        description: "Cancun blends Mayan ruins, beaches, and crazy nightlife. Not just a spring break — it was my real address."
-      },
-      {
-        name: "Sao Paulo",
-        country: "Brazil",
-        lat: -23.55,
-        lon: -46.63,
-        flag: "https://flagcdn.com/br.svg",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
-        description: "My hometown. Chaos, concrete and coxinhas. It all started here."
-      }
-    ];
-
-    const wrongCities = [
-      { name: "Tokyo", lat: 35.6762, lon: 139.6503, fun: "Konnichiwa! But you've never lived in anime land." },
-      { name: "Paris", lat: 48.8566, lon: 2.3522, fun: "Croissants? Oui. But not your home!" },
-      { name: "New York", lat: 40.7128, lon: -74.0060, fun: "Not even a Central Park picnic?" },
-      { name: "Istanbul", lat: 41.0082, lon: 28.9784, fun: "Wrong continent, detective!" },
-      { name: "Cape Town", lat: -33.9249, lon: 18.4241, fun: "You got close to a penguin... but not a residence." },
-      { name: "Sydney", lat: -33.8688, lon: 151.2093, fun: "Not even a surfboard in sight!" },
-      { name: "Rome", lat: 41.9028, lon: 12.4964, fun: "No pizza or passport stamps here." }
-    ];
-
-    // Your data arrays remain unchanged (correctCities, wrongCities)
-
-let found = 0;
-let totalGuesses = 0;
-let gameStarted = false;
-
-const map = L.map('map').setView([20, 0], 2);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  maxZoom: 6,
-  attribution: '© OpenStreetMap'
-}).addTo(map);
-
-function showModal(html) {
-  document.getElementById("modalContent").innerHTML = html;
-  document.getElementById("modal").style.display = "flex";
-}
-
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-}
-
-function updateStatus() {
-  document.getElementById("found").innerText = found;
-  document.getElementById("guesses").innerText = totalGuesses;
-}
-
-function handleCorrect(city, marker) {
-  if (!gameStarted) return;
-
-  marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker' }));
-  totalGuesses++;
-  found++;
-  updateStatus();
-  document.getElementById("correctSound").play();
-
-  showModal(`
-    <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
-    <p>${city.description}</p>
-    <button onclick="showImage('${city.name}')">Check this out</button><br><br>
-    <button onclick="closeModal()">Close</button>
-  `);
-
-  if (found === 5) {
-    setTimeout(() => {
-      showModal(`
-        <h2>🎉 You cracked the case!</h2>
-        <p>You found all the cities in <strong>${totalGuesses}</strong> guesses!</p>
-        <button onclick="restartGame()">Play Again</button>
-        <button onclick="shareOnSlack()">Share on Slack</button>
-      `);
-    }, 800);
+  function showModal(html) {
+    const modalContent = document.getElementById("modalContent");
+    modalContent.innerHTML = html;
+    document.getElementById("modal").style.display = "flex";
   }
-}
 
-function handleWrong(city, marker) {
-  if (!gameStarted) return;
+  function closeModal() {
+    document.getElementById("modal").style.display = "none";
 
-  marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker-wrong' }));
-  totalGuesses++;
-  updateStatus();
-  document.getElementById("wrongSound").play();
-  const li = document.createElement('li');
-  li.textContent = city.name;
-  document.getElementById("wrongCities").appendChild(li);
+    // Only trigger end-game modal after closing the last city modal
+    if (!gameCompleted && foundCities.size === 5) {
+      gameCompleted = true;
+      setTimeout(() => {
+        showModal(`
+          <h2>🎉 You cracked the case!</h2>
+          <p>You found all the cities in <strong>${totalGuesses}</strong> guesses!</p>
+          <button onclick="restartGame()">Play Again</button>
+          <button onclick="shareOnSlack()">Share on Slack</button>
+        `);
+      }, 500);
+    }
+  }
 
-  showModal(`
-    <p><strong>${city.name}</strong>: ${city.fun}</p>
-    <button onclick="closeModal()">Close</button>
-  `);
-}
+  function updateStatus() {
+    document.getElementById("found").innerText = foundCities.size;
+    document.getElementById("guesses").innerText = totalGuesses;
+  }
 
-function showImage(cityName) {
-  document.getElementById("modalContent").innerHTML += `
-    <img src="${cityName}.jpg" alt="${cityName}">
-  `;
-}
+  function handleCorrect(city, marker) {
+    if (!gameStarted) return;
 
-function restartGame() {
-  location.reload();
-}
+    marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker' }));
+    totalGuesses++;
 
-function shareOnSlack() {
-  const msg = encodeURIComponent(`I cracked the Carmen Sandiego City Hunt in ${totalGuesses} guesses! 🌍 Play here: [your-link]`);
-  const slackURL = `https://slack.com/app_redirect?channel=general&message=${msg}`;
-  window.open(slackURL, '_blank');
-}
+    const isNew = !foundCities.has(city.name);
+    if (isNew) {
+      foundCities.add(city.name);
+    }
 
-// Add Start Game modal
-window.onload = () => {
-  showModal(`
-    <h2>🕵️ Carmen Sandiego: City Hunt</h2>
-    <p>Can you guess the 5 cities I’ve lived in?</p>
-    <button onclick="startGame()">Start Game</button>
-  `);
-};
+    updateStatus();
+    document.getElementById("correctSound").play();
 
-function startGame() {
-  gameStarted = true;
-  closeModal();
-}
+    const imageButton = `<button id="imageBtn" onclick="showImage('${city.name}')">Check this out</button>`;
+    const closeButton = `<br><br><button onclick="closeModal()">Close</button>`;
+    showModal(`
+      <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
+      <p>${city.description}</p>
+      ${imageButton}${closeButton}
+    `);
+  }
 
-// Add Markers
-correctCities.forEach(city => {
-  const marker = L.marker([city.lat, city.lon]).addTo(map);
-  marker.on("click", () => handleCorrect(city, marker));
-});
+  function showImage(cityName) {
+    const modalContent = document.getElementById("modalContent");
+    if (!document.getElementById("modalImg")) {
+      const img = document.createElement("img");
+      img.src = `${cityName}.jpg`;
+      img.alt = cityName;
+      img.id = "modalImg";
+      img.style.marginTop = "10px";
+      modalContent.appendChild(img);
+    }
+  }
 
-wrongCities.forEach(city => {
-  const marker = L.marker([city.lat, city.lon]).addTo(map);
-  marker.on("click", () => handleWrong(city, marker));
-});
-  </script>
-</body>
-</html>
+  function handleWrong(city, marker) {
+    if (!gameStarted) return;
+
+    marker.setIcon(new L.Icon.Default({ className: 'leaflet-marker-icon clicked-marker-wrong' }));
+    totalGuesses++;
+    updateStatus();
+    document.getElementById("wrongSound").play();
+    const li = document.createElement('li');
+    li.textContent = city.name;
+    document.getElementById("wrongCities").appendChild(li);
+
+    showModal(`
+      <p><strong>${city.name}</strong>: ${city.fun}</p>
+      <button onclick="closeModal()">Close</button>
+    `);
+  }
+
+  function restartGame() {
+    location.reload();
+  }
+
+  function shareOnSlack() {
+    const msg = encodeURIComponent(`I cracked the Carmen Sandiego City Hunt in ${totalGuesses} guesses! 🌍 Play here: [your-link]`);
+    const slackURL = `https://slack.com/app_redirect?channel=general&message=${msg}`;
+    window.open(slackURL, '_blank');
+  }
+
+  // Start modal
+  window.onload = () => {
+    showModal(`
+      <h2>🕵️ Carmen Sandiego: City Hunt</h2>
+      <p>Can you guess the 5 cities I’ve lived in?</p>
+      <button onclick="startGame()">Start Game</button>
+    `);
+  };
+
+  function startGame() {
+    gameStarted = true;
+    closeModal();
+  }
+
+  // Add markers
+  correctCities.forEach(city => {
+    const marker = L.marker([city.lat, city.lon]).addTo(map);
+    marker.on("click", () => handleCorrect(city, marker));
+  });
+
+  wrongCities.forEach(city => {
+    const marker = L.marker([city.lat, city.lon]).addTo(map);
+    marker.on("click", () => handleWrong(city, marker));
+  });
