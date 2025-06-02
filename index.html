@@ -78,6 +78,14 @@
       font-size: 10px;
     }
 
+    a {
+      color: #ffcc00;
+      font-size: 10px;
+      display: inline-block;
+      margin-top: 10px;
+      text-decoration: underline;
+    }
+
     #wrongCities {
       list-style: none;
       padding-left: 0;
@@ -168,9 +176,11 @@
     let totalGuesses = 0;
 
     const map = L.map('map').setView([20, 0], 2);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    L.tileLayer('https://tiles.8bit.town/tiles/{z}/{x}/{y}.png', {
+      attribution: '8bit.town',
       maxZoom: 6,
-      attribution: '© OpenStreetMap'
+      tileSize: 256,
+      noWrap: true
     }).addTo(map);
 
     function showModal(html) {
@@ -199,7 +209,7 @@
       showModal(`
         <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
         <p>${city.description}</p>
-        <img src="${city.image}" alt="${city.name}">
+        <a href="#" onclick="showModal('<h2><img src=\\'${city.flag}\\' class=\\'flag\\'>${city.name}, ${city.country}</h2><img src=\\'${city.image}\\' alt=\\'${city.name}\\'><br><button onclick=\\'closeModal()\\'>Close</button>'); return false;">Check this out</a>
       `);
 
       if (found === 5) {
