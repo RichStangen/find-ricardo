@@ -5,15 +5,16 @@
   <title>Carmen Sandiego: City Hunt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Leaflet CSS -->
+  <!-- Fonts & Leaflet CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
   <style>
     body {
       margin: 0;
-      font-family: system-ui, Arial, sans-serif;
-      background: #f0f0f0;
-      color: #222;
+      font-family: 'Press Start 2P', monospace;
+      background: #111;
+      color: #fdf6e3;
     }
 
     #map {
@@ -25,12 +26,11 @@
       position: absolute;
       top: 10px;
       left: 10px;
-      background: rgba(255,255,255,0.9);
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      background: rgba(0,0,0,0.8);
+      padding: 10px;
+      border: 2px solid #fdf6e3;
       z-index: 999;
-      font-size: 14px;
+      font-size: 10px;
     }
 
     .modal {
@@ -41,25 +41,24 @@
       top: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.85);
       justify-content: center;
       align-items: center;
       text-align: center;
     }
 
     .modal-content {
-      background: #fff;
-      color: #000;
+      background: #222;
+      border: 2px solid #fdf6e3;
       padding: 20px;
-      border-radius: 8px;
+      color: #fdf6e3;
       max-width: 500px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
     }
 
     .modal img {
       max-width: 100%;
+      border: 1px solid #fdf6e3;
       margin-top: 10px;
-      border-radius: 5px;
     }
 
     .flag {
@@ -70,40 +69,20 @@
 
     button {
       margin-top: 15px;
-      background: #007BFF;
-      color: #fff;
-      border: none;
-      padding: 8px 12px;
+      background: #444;
+      color: #fdf6e3;
+      border: 1px solid #fdf6e3;
+      padding: 5px 10px;
       cursor: pointer;
-      font-size: 14px;
-      border-radius: 4px;
-    }
-
-    a {
-      color: #007BFF;
-      font-size: 13px;
-      display: inline-block;
-      margin-top: 10px;
-      text-decoration: underline;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 10px;
     }
 
     #wrongCities {
       list-style: none;
       padding-left: 0;
       margin: 5px 0 0 0;
-      font-size: 13px;
-    }
-
-    .shake {
-      animation: shake 0.4s;
-    }
-
-    @keyframes shake {
-      0% { transform: translateX(0); }
-      25% { transform: translateX(-5px); }
-      50% { transform: translateX(5px); }
-      75% { transform: translateX(-5px); }
-      100% { transform: translateX(0); }
+      font-size: 8px;
     }
   </style>
 </head>
@@ -126,7 +105,6 @@
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script>
     const correctCities = [
       {
@@ -135,6 +113,7 @@
         lat: 45.75,
         lon: 126.65,
         flag: "https://flagcdn.com/cn.svg",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg/640px-Harbin%2C_Heilongjiang%2C_China_-_panoramio.jpg",
         description: "Harbin was my first destination after leaving Brazil. It’s freezing cold, but the beer is warm — culturally speaking. Toasts with hierarchy, 600ml bottles per person, and ‘Ganbei’ challenges were daily dinner rituals."
       },
       {
@@ -143,6 +122,7 @@
         lat: 25.2048,
         lon: 55.2708,
         flag: "https://flagcdn.com/ae.svg",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
         description: "Dubai dazzles with skyscrapers, desert adventures, and a luxury lifestyle. I called it home for a while!"
       },
       {
@@ -151,6 +131,7 @@
         lat: 18.58,
         lon: -68.405,
         flag: "https://flagcdn.com/do.svg",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
         description: "Punta Cana is a tropical dreamland. I lived where most people vacation!"
       },
       {
@@ -159,6 +140,7 @@
         lat: 21.1619,
         lon: -86.8515,
         flag: "https://flagcdn.com/mx.svg",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
         description: "Cancun blends Mayan ruins, beaches, and crazy nightlife. Not just a spring break — it was my real address."
       },
       {
@@ -167,6 +149,7 @@
         lat: -23.55,
         lon: -46.63,
         flag: "https://flagcdn.com/br.svg",
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
         description: "My hometown. Chaos, concrete and coxinhas. It all started here."
       }
     ];
@@ -186,8 +169,8 @@
 
     const map = L.map('map').setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 18
+      maxZoom: 6,
+      attribution: '© OpenStreetMap'
     }).addTo(map);
 
     function showModal(html) {
@@ -204,20 +187,6 @@
       document.getElementById("guesses").innerText = totalGuesses;
     }
 
-    function bounceMarker(marker) {
-      marker._icon.classList.add('leaflet-marker-icon-bounce');
-      setTimeout(() => {
-        marker._icon.classList.remove('leaflet-marker-icon-bounce');
-      }, 700);
-    }
-
-    function shakeMarker(marker) {
-      marker._icon.classList.add('shake');
-      setTimeout(() => {
-        marker._icon.classList.remove('shake');
-      }, 500);
-    }
-
     function handleCorrect(city, marker) {
       if (marker.clicked) return;
       marker.clicked = true;
@@ -226,12 +195,11 @@
       found++;
       updateStatus();
       document.getElementById("correctSound").play();
-      bounceMarker(marker);
 
       showModal(`
         <h2><img src="${city.flag}" class="flag">${city.name}, ${city.country}</h2>
         <p>${city.description}</p>
-        <a href="#" onclick="showModal('<h2><img src=\\'${city.flag}\\' class=\\'flag\\'>${city.name}, ${city.country}</h2><img src=\\'images/${city.name}.jpg\\' alt=\\'${city.name}\\'><br><button onclick=\\'closeModal()\\'>Close</button>'); return false;">Check this out</a>
+        <img src="${city.image}" alt="${city.name}">
       `);
 
       if (found === 5) {
@@ -248,8 +216,6 @@
       totalGuesses++;
       updateStatus();
       document.getElementById("wrongSound").play();
-      shakeMarker(marker);
-
       const li = document.createElement('li');
       li.textContent = city.name;
       document.getElementById("wrongCities").appendChild(li);
