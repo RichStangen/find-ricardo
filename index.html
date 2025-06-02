@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Where in the World Have I Lived?</title>
+  <title>🌍 Where Have I Lived?</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
     body {
       font-family: 'Courier New', Courier, monospace;
@@ -16,15 +17,15 @@
       font-size: 2rem;
       margin-bottom: 0.5rem;
     }
-    input {
+    input, button {
       padding: 0.5rem;
-      width: 50%;
-      margin: 1rem 0;
       font-size: 1rem;
+      margin-top: 1rem;
+    }
+    input {
+      width: 50%;
     }
     button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
       background-color: #ffe600;
       border: none;
       color: #1b1f2a;
@@ -36,43 +37,49 @@
       margin-top: 1rem;
       border-radius: 10px;
     }
-    img {
+    img.city-image {
       width: 100%;
       border-radius: 10px;
       margin-top: 0.5rem;
     }
-    .clue {
-      margin-top: 1rem;
-      font-style: italic;
-      color: #a0d8ff;
+    .flag {
+      width: 24px;
+      vertical-align: middle;
+      margin-right: 0.5rem;
     }
-    .status {
+    .clue, .status, .wrong {
       margin-top: 1rem;
-      color: #00ff88;
     }
-    .wrong {
+    .clue { color: #a0d8ff; font-style: italic; }
+    .status { color: #00ff88; }
+    .wrong { color: #ff5555; }
+    #map {
+      height: 300px;
       margin-top: 1rem;
-      color: #ff5555;
-    }
-    .game-section {
-      max-width: 600px;
-      margin: auto;
+      border: 2px solid #444;
+      border-radius: 10px;
     }
   </style>
 </head>
 <body>
-  <div class="game-section">
-    <h1>🌍 Where Have I Lived?</h1>
-    <p>Find all the cities I once called home. Think like a detective!</p>
-    <input type="text" id="cityInput" placeholder="Type a city name..." />
-    <button onclick="guessCity()">Search</button>
+  <h1>🕵️ Where Have I Lived?</h1>
+  <p>Find all the cities I once called home. Think like a detective!</p>
+  <input type="text" id="cityInput" placeholder="Type a city name..." />
+  <button onclick="guessCity()">Search</button>
 
-    <div class="status" id="progressTracker"></div>
-    <div id="result"></div>
-    <div class="clue" id="clueBox"></div>
-    <div class="wrong" id="wrongGuessesBox"></div>
-  </div>
+  <div class="status" id="progressTracker"></div>
+  <div id="result"></div>
+  <div class="clue" id="clueBox"></div>
+  <div class="wrong" id="wrongGuessesBox"></div>
 
+  <div id="map"></div>
+
+  <!-- Sound Effects -->
+  <audio id="correctSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
+  <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" preload="auto"></audio>
+
+  <!-- Leaflet.js -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const cities = [
       {
@@ -80,40 +87,64 @@
         country: "China",
         clue: "This city hosts one of the world's largest ice and snow festivals.",
         description: "Harbin is famous for its ice sculptures, Russian architecture, and bitterly cold winters.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Harbin_Ice_Snow_Sculpture_Festival_2010.jpg/640px-Harbin_Ice_Snow_Sculpture_Festival_2010.jpg"
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Harbin_Ice_Snow_Sculpture_Festival_2010.jpg/640px-Harbin_Ice_Snow_Sculpture_Festival_2010.jpg",
+        flag: "https://flagcdn.com/cn.svg",
+        lat: 45.75,
+        lon: 126.65
       },
       {
         city: "Dubai",
         country: "UAE",
         clue: "This city is home to the world's tallest building and luxury galore.",
         description: "Dubai is a futuristic desert city known for the Burj Khalifa, lavish shopping, and diverse expat culture.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg"
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Dubai_Skyline_2020.jpg/640px-Dubai_Skyline_2020.jpg",
+        flag: "https://flagcdn.com/ae.svg",
+        lat: 25.2048,
+        lon: 55.2708
       },
       {
         city: "Punta Cana",
         country: "Dominican Republic",
         clue: "Caribbean paradise with all-inclusive resorts and endless beaches.",
         description: "Punta Cana is known for its white sandy beaches, palm trees, and resort-lined coastline.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg"
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Bavaro_beach%2C_Punta_Cana.jpg/640px-Bavaro_beach%2C_Punta_Cana.jpg",
+        flag: "https://flagcdn.com/do.svg",
+        lat: 18.58,
+        lon: -68.405
       },
       {
         city: "Cancun",
         country: "Mexico",
         clue: "Party capital on the Yucatán Peninsula with turquoise waters.",
         description: "Cancun combines Mayan ruins, world-class nightlife, and picture-perfect beaches.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg"
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Cancun_Aerial_View.jpg/640px-Cancun_Aerial_View.jpg",
+        flag: "https://flagcdn.com/mx.svg",
+        lat: 21.1619,
+        lon: -86.8515
       },
       {
         city: "Sao Paulo",
         country: "Brazil",
         clue: "The largest city in South America with a buzzing business scene and rich cultural diversity.",
         description: "Sao Paulo is a mega-metropolis known for finance, food, and art. A concrete jungle with soul.",
-        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg"
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Sao_Paulo_City_%28cropped%29.jpg/640px-Sao_Paulo_City_%28cropped%29.jpg",
+        flag: "https://flagcdn.com/br.svg",
+        lat: -23.55,
+        lon: -46.63
       }
     ];
 
     let guessed = [];
     let wrongGuesses = [];
+
+    // Initialize Map
+    const map = L.map('map').setView([20, 0], 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 6,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const markers = {};
 
     function updateProgress() {
       document.getElementById("progressTracker").innerText = `Cities Found: ${guessed.length} / ${cities.length}`;
@@ -125,6 +156,8 @@
       const resultDiv = document.getElementById("result");
       const clueBox = document.getElementById("clueBox");
       const wrongBox = document.getElementById("wrongGuessesBox");
+      const correctSound = document.getElementById("correctSound");
+      const wrongSound = document.getElementById("wrongSound");
 
       resultDiv.innerHTML = '';
       clueBox.innerHTML = '';
@@ -133,15 +166,19 @@
 
       if (match && !guessed.includes(match.city)) {
         guessed.push(match.city);
+        correctSound.play();
         resultDiv.innerHTML = `
           <div class="city-card">
-            <h2>🧩 ${match.city}, ${match.country}</h2>
+            <h2><img class="flag" src="${match.flag}" alt="flag"/>${match.city}, ${match.country}</h2>
             <p>${match.description}</p>
-            <img src="${match.image}" alt="${match.city}">
+            <img class="city-image" src="${match.image}" alt="${match.city}">
           </div>
         `;
+        const marker = L.marker([match.lat, match.lon]).addTo(map).bindPopup(`${match.city}, ${match.country}`);
+        markers[match.city] = marker;
       } else if (!match && !wrongGuesses.includes(input)) {
         wrongGuesses.push(input);
+        wrongSound.play();
         const remaining = cities.filter(c => !guessed.includes(c.city));
         const clue = remaining[Math.floor(Math.random() * remaining.length)].clue;
         clueBox.innerText = `Clue: ${clue}`;
